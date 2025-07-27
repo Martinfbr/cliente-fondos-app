@@ -7,50 +7,45 @@ from app.database.dynamodb import (
 from app.services.saldo import obtener_saldo, actualizar_saldo
 import uuid
 from datetime import datetime
+from app.exceptions import FondoNoEncontradoError, SaldoInsuficienteError, MontoInvalidoError
+
 
 # 👉 Función para suscribirse a un fondo de inversión
+from app.exceptions import FondoNoEncontradoError, SaldoInsuficienteError, MontoInvalidoError
+
 def suscribirse_a_fondo(request):
-    fondo_info = obtener_fondo_por_id(request.fondo_id)  # Usamos ID correctamente
+    fondo_info = obtener_fondo_por_id(request.fondo_id)
     if not fondo_info:
-        return {"error": f"Fondo '{request.fondo_id}' no encontrado."}
+        raise FondoNoEncontradoError(request.fondo_id)
 
     monto_minimo = int(fondo_info["MontoMinimo"])
     cliente_id = request.cliente_id
-    monto_ingresado = request.monto  # ✅ Este monto lo proporciona el usuario
+    monto_solicitado = request.monto
 
-    # Validar que el monto sea suficiente
-    if monto_ingresado < monto_minimo:
-        return {
-            "error": f"El monto ingresado (${monto_ingresado}) es menor al mínimo requerido (${monto_minimo}) para el fondo '{fondo_info['Nombre']}'."
-        }
+    if monto_solicitado < monto_minimo:
+        raise MontoInvalidoError(monto_solicitado, monto_minimo, fondo_info['Nombre'])
 
     saldo_actual = obtener_saldo(cliente_id)
 
-    # Validar que tenga suficiente saldo
-    if saldo_actual < monto_ingresado:
-        return {
-            "error": f"Saldo insuficiente. Tiene ${saldo_actual} y desea suscribirse con ${monto_ingresado}."
-        }
+    if saldo_actual < monto_solicitado:
+        raise SaldoInsuficienteError(fondo_info['Nombre'])
 
-    # Registrar la transacción
     transaccion = {
         "transaccion_id": str(uuid.uuid4()),
         "cliente_id": cliente_id,
         "fondo_id": request.fondo_id,
         "fondo_nombre": fondo_info['Nombre'],
-        "monto": monto_ingresado,  # ✅ Se guarda el monto real, no el mínimo
+        "monto": monto_solicitado,
         "tipo": "apertura",
         "fecha": datetime.utcnow().isoformat()
     }
 
     insertar_transaccion(transaccion)
-
-    # Actualizar saldo del cliente
-    nuevo_saldo = saldo_actual - monto_ingresado
+    nuevo_saldo = saldo_actual - monto_solicitado
     actualizar_saldo(cliente_id, nuevo_saldo)
 
     return {
-        "mensaje": f"✅ Suscripción exitosa al fondo {fondo_info['Nombre']} por ${monto_ingresado}",
+        "mensaje": f"✅ Suscripción exitosa al fondo {fondo_info['Nombre']}",
         "saldo_actual": nuevo_saldo
     }
 
