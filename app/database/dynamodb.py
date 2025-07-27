@@ -3,6 +3,7 @@ import boto3
 from botocore.exceptions import ClientError
 from dotenv import load_dotenv
 from boto3.dynamodb.conditions import Attr
+from app.models.transaccion import Transaccion
 from datetime import datetime
 import uuid
 
@@ -34,6 +35,10 @@ TABLE_USUARIO_SALDO = 'UsuarioSaldo'
 def insertar_transaccion(transaccion: dict):
     try:
         print("📤 Insertando transacción:", transaccion)
+
+        # Si no viene definido el estado, lo asignamos como "activa"
+        estado = transaccion.get('estado', 'activo')
+
         item = {
             'transaccion_id': {'S': transaccion['transaccion_id']},
             'cliente_id': {'S': transaccion['cliente_id']},
@@ -41,17 +46,34 @@ def insertar_transaccion(transaccion: dict):
             'fondo_id': {'S': transaccion['fondo_id']},
             'fondo_nombre': {'S': transaccion['fondo_nombre']},
             'monto': {'N': str(transaccion['monto'])},
-            'fecha': {'S': transaccion['fecha']}
+            'fecha': {'S': transaccion['fecha']},
+            'estado': {'S': estado}  # ✅ Siempre presente
         }
+
         client.put_item(TableName=TABLE_TRANSACCIONES, Item=item)
         print("✅ Transacción insertada correctamente.")
     except ClientError as e:
         raise Exception(f"❌ Error al insertar transacción: {e.response['Error']['Message']}")
 
+
+def obtener_transacciones_apertura_activas(cliente_id, fondo_id):
+    transacciones = obtener_transacciones(cliente_id)
+    return [
+        t for t in transacciones
+        if t["tipo"] == "apertura" and t["fondo_id"] == fondo_id and t.get("estado", "activa") == "activa"
+    ]
+
+def marcar_transaccion_como_cancelada(transaccion_id):
+    tabla = dynamodb.Table("Transacciones")
+    tabla.update_item(
+        Key={"transaccion_id": transaccion_id},
+        UpdateExpression="SET estado = :estado",
+        ExpressionAttributeValues={":estado": "cancelada"}
+    )
+
 # ✅ Obtener historial de transacciones de un cliente
 def obtener_transacciones(cliente_id: str):
     try:
-        # Escanear filtrando por cliente_id
         response = client.scan(
             TableName=TABLE_TRANSACCIONES,
             FilterExpression="cliente_id = :cid",
@@ -62,6 +84,7 @@ def obtener_transacciones(cliente_id: str):
             {
                 'transaccion_id': item['transaccion_id']['S'],
                 'cliente_id': item['cliente_id']['S'],
+                'estado': item.get('estado', {}).get('S', 'desconocido'),  # 👈 evita el KeyError
                 'tipo': item['tipo']['S'],
                 'fondo_id': item['fondo_id']['S'],
                 'fondo_nombre': item['fondo_nombre']['S'],
