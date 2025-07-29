@@ -1,0 +1,44 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: "Infraestructura para API FastAPI en Lambda + API Gateway + DynamoDB + SNS"
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: python3.12
+    MemorySize: 256
+
+Resources:
+  # Topic SNS para notificaciones
+  NotificacionesTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: NotificacionesFondos
+
+  ApiLambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handler.handler
+      CodeUri: ../backend/
+      Policies:
+        - AmazonDynamoDBFullAccess   # Permite leer/escribir en DynamoDB
+        - AmazonSNSFullAccess
+      Environment:
+        Variables:
+          DYNAMODB_TABLE: "Fondos"
+          SNS_TOPIC_ARN: !Ref NotificacionesTopic  # ARN del topic como variable
+      Events:
+        ApiGatewayProxy:
+          Type: Api
+          Properties:
+            Path: /{proxy+}
+            Method: ANY
+
+Outputs:
+  ApiUrl:
+    Description: "URL de la API Gateway"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+
+  SnsTopicArn:
+    Description: "ARN del Topic SNS para notificaciones"
+    Value: !Ref NotificacionesTopic
