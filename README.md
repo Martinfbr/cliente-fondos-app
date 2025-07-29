@@ -168,9 +168,10 @@ aws cloudformation update-stack \
 
 # Eliminar stack
 aws cloudformation delete-stack --stack-name backendfondospruebatecnica
-
-🖥️ Infraestructura del Frontend
-📄 Plantilla cloudformation/frontend-s3-cloudfront.yaml
+```
+---
+## 🖥️ Infraestructura del Frontend
+### 📄 Plantilla cloudformation/frontend-s3-cloudfront.yaml
 
 🚀 Comandos de despliegue
 
@@ -226,7 +227,7 @@ Este diseño incluye:
 - Notas importantes al final
 
 Puedes ajustar los emojis o colores si lo prefieres, pero esta estructura hace que el README sea más atractivo y fácil de seguir.
-
+---
 ## 👨‍💻 Autor
 
 Desarrollado por **MARTIN BALBIN**.
