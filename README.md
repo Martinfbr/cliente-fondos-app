@@ -118,8 +118,8 @@ Accede a:
 - Redoc: http://localhost:8000/redoc
 
 Rutas en Produccion
--PROD: https://9feflclol0.execute-api.us-east-2.amazonaws.com/Prod/docs
--REACT: https://dpiww6892pqew.cloudfront.net/
+- PROD: https://9feflclol0.execute-api.us-east-2.amazonaws.com/Prod/docs
+- REACT: https://dpiww6892pqew.cloudfront.net/
 ---
 
 ## 🚀 **Endpoints disponibles** (https://9feflclol0.execute-api.us-east-2.amazonaws.com/Prod/docs)
@@ -142,82 +142,90 @@ Rutas en Produccion
 
 ---
 
+# Despliegue en AWS con CloudFormation
 
-## 🧩 **Despliegue con CloudFormation**
+Este proyecto incluye plantillas YAML para desplegar la infraestructura del frontend y backend en AWS.
 
-Despliegue con CloudFormation
+## 🌐 Infraestructura del Backend
 
-Este proyecto incluye plantillas YAML para desplegar frontend y backend en AWS.
+### 📄 Plantilla
+`cloudformation/template.yaml`
 
-1. Despliegue del Backend
+### 🚀 Comandos de despliegue
 
-Plantilla: cloudformation/template.yaml
-
-Crear stack:
-
+```bash
+# Crear stack
 aws cloudformation create-stack \
   --stack-name backendfondospruebatecnica \
   --template-body file://C:/Personal/proyecto-app/cloudformation/template.yaml \
   --capabilities CAPABILITY_IAM
 
-Actualizar stack:
-
+# Actualizar stack
 aws cloudformation update-stack \
   --stack-name backendfondospruebatecnica \
   --template-body file://C:/Personal/proyecto-app/cloudformation/template.yaml \
   --capabilities CAPABILITY_IAM
 
-Eliminar stack:
-
+# Eliminar stack
 aws cloudformation delete-stack --stack-name backendfondospruebatecnica
 
-2. Despliegue del Frontend
+🖥️ Infraestructura del Frontend
+📄 Plantilla cloudformation/frontend-s3-cloudfront.yaml
 
-Plantilla: cloudformation/frontend-s3-cloudfront.yaml
+🚀 Comandos de despliegue
 
-Crear stack:
-
+# Crear stack
 aws cloudformation create-stack \
   --stack-name frontendfondospruebatecnica \
   --template-body file://C:/Personal/proyecto-app/cloudformation/frontend-s3-cloudfront.yaml \
   --parameters ParameterKey=BucketName,ParameterValue=frontendfondospruebatecnica \
   --capabilities CAPABILITY_IAM
 
-Actualizar stack:
-
+# Actualizar stack
 aws cloudformation update-stack \
   --stack-name frontendfondospruebatecnica \
   --template-body file://C:/Personal/proyecto-app/cloudformation/frontend-s3-cloudfront.yaml \
   --parameters ParameterKey=BucketName,ParameterValue=frontendfondospruebatecnica \
   --capabilities CAPABILITY_IAM
 
-Eliminar stack:
-
+# Eliminar stack
 aws cloudformation delete-stack --stack-name frontendfondospruebatecnica
 
-3. Subir archivos del Frontend a S3
-
-Compilar y subir a bucket S3:
+🔄 Subir archivos del Frontend a S3
 
 cd frontend
 npm run build
 aws s3 sync build/ s3://frontendfondospruebatecnica
+🔌 Conectar Frontend con Backend
+Obtener URL del API Gateway:
 
-4. Conectar Frontend con Backend
-
-Obtener URL del API Gateway del backend:
 
 aws cloudformation describe-stacks \
   --stack-name backendfondospruebatecnica \
   --query "Stacks[0].Outputs"
+Configurar la URL en .env.production:
 
-Configurar la URL en .env.production del frontend:
 
 VITE_API_URL=https://<API_GATEWAY_URL>
+Reconstruir y volver a subir:
 
-Reconstruir y volver a subir a S3:
+npm run build
+aws s3 sync build/ s3://frontendfondospruebatecnica
 
----
+📌 Notas
+
+Asegúrate de tener configuradas las credenciales de AWS CLI
+
+Verifica que todas las rutas de archivos sean correctas para tu entorno
+
+Este diseño incluye:
+- Emojis para mejorar la visualización
+- Secciones claramente delimitadas
+- Sintaxis de código bien formateada
+- Comandos completos y legibles
+- Notas importantes al final
+
+Puedes ajustar los emojis o colores si lo prefieres, pero esta estructura hace que el README sea más atractivo y fácil de seguir.
 
 ## 👨‍💻 Autor
 
